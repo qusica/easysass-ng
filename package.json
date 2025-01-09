@@ -1,0 +1,86 @@
+{
+    "name": "easysass-ng",
+    "displayName": "Easy Sass NG",
+    "description": "Built-in, easy to use Sass compiler, fork from easysass",
+    "icon": "icon.png",
+    "galleryBanner": {
+        "theme": "light"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/wojciechsura/easysass-ng.git"
+    },
+    "version": "0.0.6",
+    "publisher": "qusic",
+    "engines": {
+        "vscode": "^1.10.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onLanguage:scss","onLanguage:css"
+    ],
+    "main": "./extension",
+    "contributes": {
+        "configuration":{
+            "type": "object",
+            "title": "EasySass configuration",
+            "properties": {
+                "easysass-ng.compileAfterSave": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically compile SASS/SCSS file after saving"
+                },
+                "easysass-ng.compileRelatedFiles": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically compile related SASS/SCSS files after saving"
+                },
+                "easysass-ng.formats": {
+                    "type": "array",
+                    "default": [
+                        {
+                            "format": "expanded",
+                            "extension": ".css"
+                        },
+                        {
+                            "format": "compressed",
+                            "extension": ".min.css"
+                        }
+                    ],
+                    "description": "Define format(s) for outputted css files. Use \"nested\", \"expanded\", \"compact\" or \"compressed\" as a format."
+                },
+                "easysass-ng.excludeRegex": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Regular expression for filenames (excluding path) excluded from building. Leave empty to disable."
+                },
+                "easysass-ng.targetDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Target directory for generated files. If relative, will be based on currently opened folder in VS Code."
+                }
+            }
+        },
+        "commands": [{
+            "command": "easysass-ng.compileAll",
+            "title": "Compile all SCSS/SASS files in the project"
+        }]
+    },
+    "scripts": {
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "node ./node_modules/vscode/bin/test"
+    },
+    "dependencies": {
+        "replace-ext": "latest"
+    },
+    "devDependencies": {
+        "typescript": "latest",
+        "vscode": "latest",
+        "mocha": "latest",
+        "eslint": "latest",
+        "@types/node": "latest",
+        "@types/mocha": "latest"
+    }
+}
