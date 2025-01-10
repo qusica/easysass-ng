@@ -1,10 +1,11 @@
-var vscode = require('vscode');
-var fs = require('fs');
-var replaceExt = require('replace-ext');
-var compileSass = require('./lib/sass.node.spk.js');
-var pathModule = require('path');
+const vscode = require('vscode');
+const fs = require('fs');
+const replaceExt = require('replace-ext');
+const compileSass = require('./lib/sass.node.spk.js');
+const pathModule = require('path');
+const readline = require('readline');
 
-var CompileSassExtension = function() {
+const CompileSassExtension = function() {
 
     // Private fields ---------------------------------------------------------
 
@@ -37,7 +38,7 @@ var CompileSassExtension = function() {
                 outputChannel.appendLine("Failed to generate CSS from SASS, but the error is unknown.");
             }
 
-            vscode.window.showErrorMessage('EasySass: could not generate CSS file. See Output panel for details.');
+            vscode.window.showErrorMessage('EasySassNG: could not generate CSS file. See Output panel for details.');
             outputChannel.show(true);
         }
     }
@@ -127,25 +128,57 @@ var CompileSassExtension = function() {
 
     // Checks, if the file matches the exclude regular expression
     function checkExclude(filename) {
-        
         var configuration = getConfiguration();
         return configuration.excludeRegex.length > 0 && new RegExp(configuration.excludeRegex).test(filename);
     }
-    const relatedRegexp = new RegExp(`@import\\s+(['"])(.+?)\\1`, 'g');
+    const importRegexp = new RegExp(`@import\\s+(['"])(.+?)\\1`, 'g');
     async function getRelatedFiles(filepath) {
-        const files = await vscode.workspace.findFiles("**/*.s[ac]ss");
-        
-        return files.filter(function (file) {
-            const fileContent = fs.readFileSync(file.fsPath);
-            let result = null;
-            while (result = relatedRegexp.exec(fileContent)) {
-                //把import中的路径解析成绝对路径
-                const absPath = pathModule.resolve(pathModule.dirname(file.fsPath), result[2]);
-                return filepath.startsWith(absPath);
+        const files = await findAllSassFiles();
+        const results = [];
+        for (const file of files) {
+            if(filepath.startsWith(file.fsPath)){
+                continue;
             }
-        });
+            //使用按行读取的方式，逐行匹配import语句
+            const rl = readline.createInterface({
+                input: fs.createReadStream(file.fsPath)
+            });
+            const currentDir = pathModule.dirname(file.fsPath);
+            rl.on('line', (line) => {
+                let result = null;
+                importRegexp.lastIndex = 0;
+                while (result = importRegexp.exec(line)) {
+                    //把import中的路径解析成绝对路径
+                    const absPath = pathModule.resolve(currentDir, result[2]);
+                    //匹配到了就不需要再继续读取文件了
+                    if( filepath.startsWith(absPath)){
+                        results.push(file);
+                        rl.close();
+                        break;
+                    }
+                }
+            })
+            await new Promise((resolve) =>{
+                rl.on('close',resolve)
+            });
+        }
+        return results;
     }
-
+    /**
+     * 
+     * @returns {(uri:vscode.Uri)=>boolean}
+     */
+    function useExcludeMatcher(){
+        const configuration = getConfiguration();
+        const excludeRegex = configuration.excludeRegex.length > 0 ? new RegExp(configuration.excludeRegex) : null;
+        if (excludeRegex) {
+            return (uri)=>{
+                const filename = pathModule.basename(uri.fsPath);
+                return excludeRegex.test(filename);
+            };
+        }
+        return ()=> false;
+    }
     /**
      * 
      * @param {vscode.URI[]} files 
@@ -154,13 +187,11 @@ var CompileSassExtension = function() {
         if(!Array.isArray(files) || files.length == 0){
             return;
         }
-        const configuration = getConfiguration();
-        const checkExclude = (filename) => configuration.excludeRegex.length > 0 && new RegExp(configuration.excludeRegex).test(filename);
+        const checkExclude = useExcludeMatcher();
         try {
             for (var i = 0; i < files.length; i++) {
-                var filename = pathModule.basename(files[i].fsPath);
-                if (checkExclude(filename)) {
-                    outputChannel.appendLine("File " + filename + " is excluded from building to CSS. Check easysass.excludeRegex setting.");
+                if (checkExclude(files[i])) {
+                    outputChannel.appendLine("File " + pathModule.basename(files[i].fsPath) + " is excluded from building to CSS. Check easysass.excludeRegex setting.");
                     continue;
                 }
                 compileFile(files[i].fsPath);
@@ -171,11 +202,22 @@ var CompileSassExtension = function() {
         }  
     }
 
+    /**
+     * 查找工作目录中的所有sass文件，过滤掉node_modules目录下的文件，以及excludeRegex匹配到的文件
+     * @returns {Promise<vscode.Uri[]>}
+     */
+    async function findAllSassFiles(){
+        const files = await vscode.workspace.findFiles("**/*.s[ac]ss", "**/node_modules/**");
+        const excludeMatcher = useExcludeMatcher();
+        return files.filter(file => !excludeMatcher(file));
+    }
+
     // Public -----------------------------------------------------------------
 
     return {
 
-        OnSave: async function (document) {
+        OnSave: async function (document) {            
+            outputChannel.clear();
             try {
                 const configuration = getConfiguration();
                 const filename = pathModule.basename(document.fileName);
@@ -205,8 +247,9 @@ var CompileSassExtension = function() {
             }
         },
         CompileAll: function() {
+            outputChannel.clear();
             outputChannel.appendLine('EasySass: do compile all files action.');
-            vscode.workspace.findFiles("**/*.s[ac]ss").then(compileFiles);            
+            findAllSassFiles().then(compileFiles);            
         }
     };
 };
