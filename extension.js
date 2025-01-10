@@ -126,6 +126,17 @@ const CompileSassExtension = function() {
         }        
     }
 
+    function getVSCodeExcludes() {
+        const configuration = vscode.workspace.getConfiguration('search');        
+        const pattern = Object.keys(configuration.get('exclude')).join(",");
+        return pattern ? '{'+pattern+'}' : void 0;
+    }
+
+    function getExcludeGlob(){
+        const configuration = getConfiguration();
+        const pattern = configuration.exclude;
+        return pattern ? pattern : getVSCodeExcludes();
+    }
     // Checks, if the file matches the exclude regular expression
     function checkExclude(filename) {
         var configuration = getConfiguration();
@@ -207,7 +218,7 @@ const CompileSassExtension = function() {
      * @returns {Promise<vscode.Uri[]>}
      */
     async function findAllSassFiles(){
-        const files = await vscode.workspace.findFiles("**/*.s[ac]ss", "**/node_modules/**");
+        const files = await vscode.workspace.findFiles("**/*.s[ac]ss", getExcludeGlob());
         const excludeMatcher = useExcludeMatcher();
         return files.filter(file => !excludeMatcher(file));
     }
@@ -216,7 +227,7 @@ const CompileSassExtension = function() {
 
     return {
 
-        OnSave: async function (document) {            
+        OnSave: async function (document) {
             outputChannel.clear();
             try {
                 const configuration = getConfiguration();

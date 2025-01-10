@@ -23,7 +23,11 @@ This extension contributes the following settings:
 * `easysass.excludeRegex`: exclude files from compilation with regular expression
 
 ## Release Notes
-
+### [0.0.8]
+- 增加配置项 `easysass-ng.exclude`，用于配置需要排除的文件或文件夹,留空则使用vscode配置的 `search.exclude`搜索排除配置
+### [0.0.7]
+- 增加过滤node_modules文件夹，提高相关搜索的效率
+- 查找相关文件时使用按行读取文件的方式，提高相关搜索的效率
 ### [0.0.6]
 - Update denpendencies
 - Add support for compile related files
