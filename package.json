@@ -10,7 +10,7 @@
         "type": "git",
         "url": "https://github.com/qusica/easysass-ng.git"
     },
-    "version": "0.0.6",
+    "version": "0.0.7",
     "publisher": "qusic",
     "engines": {
         "vscode": "^1.10.0"
