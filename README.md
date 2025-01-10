@@ -16,13 +16,16 @@ Automatically compiles SASS/SCSS files to .css and .min.css upon saving. You may
 
 This extension contributes the following settings:
 
-* `easysass.compileAfterSave`: enable or disable automatic compilation after saving
-* `easysass.compileRelatedFiles`: enable or disable automatic compilation current file related files after saving
-* `easysass.formats`: specify extensions and formats for exported files.
-* `easysass.targetDir`: define target directory for generated files.
-* `easysass.excludeRegex`: exclude files from compilation with regular expression
+* `easysass-ng.compileAfterSave`: enable or disable automatic compilation after saving
+* `easysass-ng.compileRelatedFiles`: enable or disable automatic compilation current file related files after saving
+* `easysass-ng.exclude`: glob pattern excluded from compile all and compile related files look up. Leave empty to use vscode setting search.exclude
+* `easysass-ng.formats`: specify extensions and formats for exported files.
+* `easysass-ng.targetDir`: define target directory for generated files.
+* `easysass-ng.excludeRegex`: exclude files from compilation with regular expression
 
 ## Release Notes
+### [0.0.9]
+- 修正README中的配置项名称
 ### [0.0.8]
 - 增加配置项 `easysass-ng.exclude`，用于配置需要排除的文件或文件夹,留空则使用vscode配置的 `search.exclude`搜索排除配置
 ### [0.0.7]
